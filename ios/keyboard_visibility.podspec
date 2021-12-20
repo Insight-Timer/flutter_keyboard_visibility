@@ -3,7 +3,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'keyboard_visibility'
-  s.version          = '0.5.0'
+  s.version          = '0.5.1'
   s.summary          = 'Flutter keyboard visibility project.'
   s.description      = <<-DESC
 Flutter keyboard visibility project.

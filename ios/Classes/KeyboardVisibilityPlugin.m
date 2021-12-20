@@ -8,8 +8,6 @@
 
 #import "KeyboardVisibilityPlugin.h"
 
-@import CoreLocation;
-
 @interface FLTKeyboardVisibilityPlugin() <FlutterStreamHandler>
 
 @property (copy, nonatomic) FlutterEventSink flutterEventSink;
