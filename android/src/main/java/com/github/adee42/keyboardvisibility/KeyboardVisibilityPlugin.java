@@ -1,5 +1,8 @@
 package com.github.adee42.keyboardvisibility;
 
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.EventChannel.EventSink;
 import io.flutter.plugin.common.EventChannel.StreamHandler;
@@ -19,19 +22,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
+import androidx.annotation.NonNull;
 
-public class KeyboardVisibilityPlugin implements StreamHandler, Application.ActivityLifecycleCallbacks, ViewTreeObserver.OnGlobalLayoutListener {
+
+public class KeyboardVisibilityPlugin implements FlutterPlugin, ActivityAware, StreamHandler, Application.ActivityLifecycleCallbacks, ViewTreeObserver.OnGlobalLayoutListener {
     private static final String STREAM_CHANNEL_NAME = "github.com/adee42/flutter_keyboard_visibility";
     View mainView = null;
     EventSink eventsSink;
-    Registrar registrar;
     boolean isVisible;
+    Activity activity;
 
-
-    KeyboardVisibilityPlugin(Registrar registrar) {
-		this.registrar = registrar;
-        eventsSink = null;
-    }
 
     @Override
     public void onGlobalLayout() {
@@ -98,15 +98,6 @@ public class KeyboardVisibilityPlugin implements StreamHandler, Application.Acti
         }
     }
 
-    public static void registerWith(Registrar registrar) {
-
-        final EventChannel eventChannel = new EventChannel(registrar.messenger(), STREAM_CHANNEL_NAME);
-        KeyboardVisibilityPlugin instance = new KeyboardVisibilityPlugin(registrar);
-        eventChannel.setStreamHandler(instance);
-
-        registrar.activity().getApplication().registerActivityLifecycleCallbacks(instance);
-    }
-
     @Override
     public void onListen(Object arguments, final EventSink eventsSink) {
         // register listener
@@ -121,5 +112,44 @@ public class KeyboardVisibilityPlugin implements StreamHandler, Application.Acti
     @Override
     public void onCancel(Object arguments) {
         eventsSink = null;
+    }
+
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+        final EventChannel eventChannel = new EventChannel(binding.getBinaryMessenger(), STREAM_CHANNEL_NAME);
+        eventChannel.setStreamHandler(this);
+    }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+      eventsSink = null;
+    }
+
+    @Override
+    public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+        this.activity = binding.getActivity();
+        binding.getActivity().getApplication().registerActivityLifecycleCallbacks(this);
+    }
+
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+        if(activity != null) {
+            activity.getApplication().unregisterActivityLifecycleCallbacks(this);
+        }
+        activity = null;
+    }
+
+    @Override
+    public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+       activity = binding.getActivity();
+       binding.getActivity().getApplication().registerActivityLifecycleCallbacks(this);
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+        if(activity != null) {
+            activity.getApplication().unregisterActivityLifecycleCallbacks(this);
+        }
+        activity = null;
     }
 }
